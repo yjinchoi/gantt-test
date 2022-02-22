@@ -772,15 +772,17 @@ function Gantt ( props ) {
 
 		} ) );
 
-        /*
-
 		function toggleGroups ( input ) {
 
 			gantt.$groupMode = !gantt.$groupMode;
 
 			if ( gantt.$groupMode ) {
 
-				input.value = "show gantt view";
+				if ( input ) {
+                    
+                    input.value = "show gantt view";
+
+                }
 
 				var groups = gantt.$resourcesStore.getItems ().map ( function ( item ) {
 
@@ -806,14 +808,17 @@ function Gantt ( props ) {
 
 			} else {
 
-				input.value = "show resource view";
+                if ( input ) {
+
+                    input.value = "show resource view";
+
+                }
+
 				gantt.groupBy ( false );
 
 			}
 
 		}
-
-        */
 
 		events.push ( gantt.$resourcesStore.attachEvent ( "onParse", function () {
 
@@ -856,23 +861,6 @@ function Gantt ( props ) {
 
         } ) );
 
-        events.push ( gantt.attachEvent ( "onBeforeTaskSelected", function ( id, mode, e ) {
-
-            return false;
-
-        } ) );
-
-        events.push ( gantt.attachEvent ( "onLinkClick", function ( id, e ) {
-
-            e.preventDefault ();
-
-        } ) );
-
-        events.push ( gantt.attachEvent ( "onLinkDblClick", function ( id, e ) {
-
-            e.preventDefault ();
-            
-        } ) );
 
         events.push ( gantt.attachEvent ( "onBeforeTaskDrag", function ( id, mode, e ) {
 
@@ -883,6 +871,8 @@ function Gantt ( props ) {
                 return false;
 
             }
+
+            console.log ( mode );
 
             return true;
 
