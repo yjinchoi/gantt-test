@@ -30,9 +30,8 @@ function Gantt ( props ) {
 			function selectResource () {
 
 				var node = this;
-
-				filterValue = node.value;
-
+                
+				filterValue = parseInt( node.value);
 				gantt.render ();
 
 			}
@@ -47,6 +46,8 @@ function Gantt ( props ) {
 
 				if ( id === filterValue ) {
 
+                    console.log ( 'filterItem', id, item );
+
 					if ( item.parent ) {
 
 						var parentItem = resourcesStore.getItem ( item.parent );
@@ -59,14 +60,17 @@ function Gantt ( props ) {
 
 					}
 
+                    console.log ( "true" );
 					return true;
 
 				} else if ( resourcesStore.isChildOf ( id, filterValue ) ) {
 
+                    console.log ( "true" );
 					return true;
 
 				} else {
 
+                    console.log ( "false" );
 					return false;
 
 				}
