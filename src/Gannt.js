@@ -325,7 +325,8 @@ function Gantt ( props ) {
 		};
 
 		gantt.locale.labels.section_owner = "Owner";
-
+        
+        gantt.config.open_split_tasks = true;
 		gantt.config.lightbox.sections = [
 
 			{
