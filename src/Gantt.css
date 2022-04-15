@@ -48,7 +48,7 @@ html, body {
     font-size: 12px;
     display: inline-block;
     border: 1px solid #cccccc;
-    border-radius: 25px;
+    border-radius: 50%;
     background: #e6e6e6;
     color: #6f6f6f;
     margin: 0 3px;

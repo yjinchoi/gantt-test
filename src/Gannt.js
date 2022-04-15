@@ -31,7 +31,8 @@ function Gantt ( props ) {
 
 				var node = this;
                 
-				filterValue = parseInt( node.value);
+				filterValue = parseInt( node.value );
+
 				gantt.render ();
 
 			}
@@ -46,8 +47,6 @@ function Gantt ( props ) {
 
 				if ( id === filterValue ) {
 
-                    console.log ( 'filterItem', id, item );
-
 					if ( item.parent ) {
 
 						var parentItem = resourcesStore.getItem ( item.parent );
@@ -60,17 +59,14 @@ function Gantt ( props ) {
 
 					}
 
-                    console.log ( "true" );
 					return true;
 
 				} else if ( resourcesStore.isChildOf ( id, filterValue ) ) {
 
-                    console.log ( "true" );
 					return true;
 
 				} else {
 
-                    console.log ( "false" );
 					return false;
 
 				}
@@ -128,14 +124,26 @@ function Gantt ( props ) {
 		function shouldHighlightTask ( task ) {
 
 			var store = gantt.$resourcesStore;
-			var taskResource = task[gantt.config.resource_property],
-				selectedResource = store.getSelectedId ();
+			var taskResource = task[gantt.config.resource_property];
+			var selectedResource = store.getSelectedId ();
 
-			if ( taskResource === selectedResource || store.isChildOf ( taskResource, selectedResource ) ) {
 
-				return true;
+            for ( let resource of taskResource ) {
 
-			}
+                if ( task.type !== 'task' ) {
+
+                    return false;
+
+                }
+
+                if ( resource.resource_id === selectedResource || store.isChildOf ( resource.resource_id, selectedResource ) ) {
+
+                    // console.log ( task.id, resource.resource_id, task );
+                    return true;
+
+                }
+
+            }
 
 		}
 
@@ -186,17 +194,23 @@ function Gantt ( props ) {
 
 		};
 
-		function getAllocatedValue ( tasks, resource ) {
+		function getAllocatedValue ( tasks, date, resource ) {
 
 			var result = 0;
 
 			tasks.forEach ( function ( item ) {
-
+    
 				var assignments = gantt.getResourceAssignments ( resource.id, item.id );
 
 				assignments.forEach ( function ( assignment ) {
-                    
-					result += Number ( assignment.value );
+
+                    let lastDay = new Date ( item.end_date.getTime() - 24 * 60 * 60 * 1000 );
+    
+                    if ( date.getTime() == lastDay.getTime() ) {
+                        result += 1;
+                    } else {
+                        result += 8;
+                    }
 
 				} );
 
@@ -208,7 +222,8 @@ function Gantt ( props ) {
 
 		gantt.templates.histogram_cell_class = function ( start_date, end_date, resource, tasks ) {
 
-			if ( getAllocatedValue(tasks, resource) > ( getCapacity ? getCapacity (start_date, resource) : 8 ) ) {
+
+			if ( getAllocatedValue(tasks, start_date, resource) > ( getCapacity ? getCapacity (start_date, resource) : 8 ) ) {
 
 				return "column_overload";
 
@@ -217,10 +232,11 @@ function Gantt ( props ) {
 		};
 
 		gantt.templates.histogram_cell_label = function ( start_date, end_date, resource, tasks ) {
+
             
 			if ( tasks.length && !gantt.$resourcesStore.hasChild ( resource.id ) ) {
 
-				return getAllocatedValue(tasks, resource) + "/" + ( getCapacity ? getCapacity (start_date, resource) : 8 );
+				return getAllocatedValue(tasks, start_date, resource) + "/" + ( getCapacity ? getCapacity (start_date, resource) : 8 );
 
 			} else {
 
@@ -238,7 +254,7 @@ function Gantt ( props ) {
 
 		gantt.templates.histogram_cell_allocated = function ( start_date, end_date, resource, tasks ) {
 
-			return getAllocatedValue ( tasks, resource );
+			return getAllocatedValue ( tasks, start_date, resource );
 
 		};
 
@@ -517,6 +533,8 @@ function Gantt ( props ) {
 		gantt.config.auto_scheduling = true;
 		gantt.config.auto_scheduling_strict = true;
 		gantt.config.work_time = true;
+        gantt.config.drag_move = false; 
+
 		gantt.config.columns = [
 
 			{
@@ -867,6 +885,18 @@ function Gantt ( props ) {
         } ) );
 
 
+        events.push ( gantt.attachEvent ( "onRowDragStart", function ( id, parent, tindex ) {
+
+            return false;
+
+        } ) );
+
+        events.push ( gantt.attachEvent ( "onBeforeTaskMove", function ( id, parent, tindex ) {
+
+            return false;
+
+        } ) );
+
         events.push ( gantt.attachEvent ( "onBeforeTaskDrag", function ( id, mode, e ) {
 
             // disable drag progress
@@ -877,9 +907,41 @@ function Gantt ( props ) {
 
             }
 
-            console.log ( mode );
-
             return true;
+
+        } ) );
+
+		events.push ( gantt.attachEvent ( "onAfterTaskAutoSchedule", function ( task, start, link, predecessor ) {
+
+            console.log ( "onAfterTaskAutoSchedule", task, start, link, predecessor );
+
+		} ) );
+
+        events.push ( gantt.attachEvent ( "onAfterTaskUpdate", function ( id, newTask ) {
+
+            console.log ( "onAfterTaskUpdate", id, newTask );
+
+            if ( newTask.type === 'task' ) {
+                
+                let endDate = new Date ( newTask.end_date.getTime () - 24 * 60 * 60 * 1000 );
+
+                if ( ! gantt.isWorkTime ( endDate ) ) {
+
+                    while ( ! gantt.isWorkTime ( endDate ) ) {
+    
+                        endDate = new Date ( endDate.getTime () - 24 * 60 * 60 * 1000 );
+    
+                    }
+    
+                    endDate = new Date ( endDate.getTime () + 24 * 60 * 60 * 1000 );
+    
+                    newTask.end_date = endDate;
+    
+                    gantt.updateTask ( id, newTask );
+    
+                }
+
+            }
 
         } ) );
 
